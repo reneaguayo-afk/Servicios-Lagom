@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { StorageService } from '../../services/storage';
 import { Client, ClientType, Case, CaseStatus } from '../../types';
-import { Search, Plus, Building2, User, Mail, Phone, Lock, Unlock, Trash2, Edit2, FileText, Calendar, Paperclip, Activity, Briefcase, FileCheck, StickyNote, Tag, X, Minus, CheckCircle2, LayoutGrid, List, ArrowRight, DollarSign, CreditCard, ShieldAlert } from 'lucide-react';
+import { Search, Plus, Building2, User, Mail, Phone, Lock, Unlock, Trash2, Edit2, FileText, Calendar, Paperclip, Activity, Briefcase, FileCheck, StickyNote, Tag, X, Minus, CheckCircle2, LayoutGrid, List, ArrowRight, DollarSign, CreditCard, ShieldAlert, Save } from 'lucide-react';
 import { Modal } from '../../components/Modal';
 
 const Clients = () => {
@@ -35,6 +35,8 @@ const Clients = () => {
   const [viewingClient, setViewingClient] = useState<Client | null>(null);
   const [clientCases, setClientCases] = useState<Case[]>([]);
   const [viewTab, setViewTab] = useState<'profile' | 'history' | 'payments' | 'notes'>('profile');
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [editedNotes, setEditedNotes] = useState('');
 
   // Confirmation States (Modals instead of window.confirm)
   const [clientToDelete, setClientToDelete] = useState<string | null>(null);
@@ -105,6 +107,8 @@ const Clients = () => {
     setViewingClient(client);
     setClientCases(StorageService.getCasesByClientId(client.id));
     setViewTab('profile');
+    setIsEditingNotes(false);
+    setEditedNotes(client.notes || '');
   };
 
   // --- DELETE LOGIC ---
@@ -193,6 +197,15 @@ const Clients = () => {
     if (viewingClient && viewingClient.id === newClient.id) {
         setViewingClient(newClient); // Update view if editing current
     }
+  };
+
+  const handleSaveNotes = () => {
+    if (!viewingClient) return;
+    const updatedClient = { ...viewingClient, notes: editedNotes };
+    StorageService.saveClient(updatedClient);
+    setViewingClient(updatedClient);
+    setClients(prev => prev.map(c => c.id === viewingClient.id ? updatedClient : c));
+    setIsEditingNotes(false);
   };
 
   // Multiple Contact Logic
@@ -978,13 +991,51 @@ const Clients = () => {
                )}
 
                {viewTab === 'notes' && (
-                  <div className="bg-yellow-50/50 rounded-xl border border-yellow-100 p-4 min-h-[150px]">
-                     <h4 className="text-xs font-bold text-yellow-800 mb-2 flex items-center gap-2">
-                        <StickyNote size={14} /> Notas Importantes
-                     </h4>
-                     <p className="text-gray-700 text-xs leading-relaxed whitespace-pre-wrap">
-                        {viewingClient.notes || 'No hay notas registradas para este cliente.'}
-                     </p>
+                  <div className="bg-yellow-50/50 rounded-xl border border-yellow-100 p-6 min-h-[250px] relative flex flex-col">
+                     <div className="flex justify-between items-center mb-4">
+                        <h4 className="text-xs font-bold text-yellow-800 flex items-center gap-2 uppercase tracking-widest">
+                           <StickyNote size={14} /> Notas Importantes
+                        </h4>
+                        {!isEditingNotes ? (
+                           <button 
+                              onClick={() => setIsEditingNotes(true)}
+                              className="text-[10px] font-bold text-yellow-700 bg-yellow-100 hover:bg-yellow-200 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
+                           >
+                              <Edit2 size={12} /> EDITAR NOTAS
+                           </button>
+                        ) : (
+                           <div className="flex gap-2">
+                              <button 
+                                 onClick={() => { setIsEditingNotes(false); setEditedNotes(viewingClient.notes || ''); }}
+                                 className="text-[10px] font-bold text-gray-500 bg-white border border-gray-200 hover:bg-gray-50 px-3 py-1.5 rounded-lg transition-colors"
+                              >
+                                 CANCELAR
+                              </button>
+                              <button 
+                                 onClick={handleSaveNotes}
+                                 className="text-[10px] font-bold text-white bg-[#0f172a] hover:bg-gray-800 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 shadow-md"
+                              >
+                                 <Save size={12} /> GUARDAR
+                              </button>
+                           </div>
+                        )}
+                     </div>
+                     
+                     <div className="flex-1">
+                        {isEditingNotes ? (
+                           <textarea 
+                              className="w-full h-full min-h-[150px] p-4 rounded-xl border border-yellow-200 focus:ring-2 focus:ring-yellow-400 focus:outline-none bg-white text-sm text-gray-800 resize-none shadow-inner"
+                              value={editedNotes}
+                              onChange={(e) => setEditedNotes(e.target.value)}
+                              placeholder="Escriba aquí notas relevantes sobre el cliente, preferencias de comunicación, fechas de facturación, etc."
+                              autoFocus
+                           />
+                        ) : (
+                           <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
+                              {viewingClient.notes || 'No hay notas registradas para este cliente. Use el botón "Editar" para agregar información estratégica.'}
+                           </p>
+                        )}
+                     </div>
                   </div>
                )}
             </div>
