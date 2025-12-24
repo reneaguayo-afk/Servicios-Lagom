@@ -1,8 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-const apiKey = process.env.API_KEY || '';
-const ai = new GoogleGenAI({ apiKey });
-
 interface ExtractedData {
   name: string;
   taxId: string; // RFC
@@ -26,10 +23,8 @@ export const fileToBase64 = (file: File): Promise<string> => {
 };
 
 export const analyzeTaxDocument = async (file: File): Promise<ExtractedData | null> => {
-  if (!apiKey) {
-    console.error("API Key missing");
-    return null;
-  }
+  // Create a new GoogleGenAI instance right before making an API call to ensure it always uses the most up-to-date API key.
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 
   try {
     const base64Data = await fileToBase64(file);
@@ -48,16 +43,13 @@ export const analyzeTaxDocument = async (file: File): Promise<ExtractedData | nu
     `;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: [
-        {
-          role: 'user',
-          parts: [
-            { text: prompt },
-            { inlineData: { mimeType, data: base64Data } }
-          ]
-        }
-      ],
+      model: 'gemini-3-flash-preview',
+      contents: {
+        parts: [
+          { text: prompt },
+          { inlineData: { mimeType, data: base64Data } }
+        ]
+      },
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -74,6 +66,7 @@ export const analyzeTaxDocument = async (file: File): Promise<ExtractedData | nu
     });
 
     if (response.text) {
+      // Use response.text property directly as per guidelines
       return JSON.parse(response.text) as ExtractedData;
     }
     return null;

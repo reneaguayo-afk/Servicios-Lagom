@@ -1,13 +1,9 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Case, StageStatus, ServiceTemplate, RiskAnalysis } from "../types";
 
-const apiKey = process.env.API_KEY || ''; // Fallback for dev, usually ensure env var is set
-const ai = new GoogleGenAI({ apiKey });
-
 export const generateClientUpdate = async (caseData: Case): Promise<string> => {
-  if (!apiKey) {
-    return "Error: API Key is missing. Please configure the environment.";
-  }
+  // Create a new GoogleGenAI instance right before making an API call to ensure it always uses the most up-to-date API key.
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 
   const clientName = "Cliente Estimado"; // Ideally fetch client name via ID
   const lastCompleted = caseData.stages.filter(s => s.status === StageStatus.COMPLETED).pop();
@@ -33,9 +29,10 @@ export const generateClientUpdate = async (caseData: Case): Promise<string> => {
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3-flash-preview',
       contents: prompt,
     });
+    // Use response.text property directly as per guidelines
     return response.text || "No se pudo generar el reporte.";
   } catch (error) {
     console.error("Error generating update:", error);
@@ -44,10 +41,8 @@ export const generateClientUpdate = async (caseData: Case): Promise<string> => {
 };
 
 export const generateServiceDetails = async (serviceName: string): Promise<Partial<ServiceTemplate> | null> => {
-  if (!apiKey) {
-    console.error("API Key missing");
-    return null;
-  }
+  // Create a new GoogleGenAI instance right before making an API call to ensure it always uses the most up-to-date API key.
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 
   const prompt = `
     Genera una plantilla detallada para un servicio legal llamado "${serviceName}".
@@ -65,7 +60,7 @@ export const generateServiceDetails = async (serviceName: string): Promise<Parti
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3-pro-preview',
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -95,6 +90,7 @@ export const generateServiceDetails = async (serviceName: string): Promise<Parti
     });
 
     if (response.text) {
+      // Use response.text property directly as per guidelines
       const data = JSON.parse(response.text);
       return {
         name: serviceName,
@@ -119,7 +115,8 @@ export const generateServiceDetails = async (serviceName: string): Promise<Parti
 };
 
 export const analyzeOperationalRisk = async (cases: Case[]): Promise<RiskAnalysis | null> => {
-   if (!apiKey) return null;
+   // Create a new GoogleGenAI instance right before making an API call to ensure it always uses the most up-to-date API key.
+   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 
    // Simplified case data for prompt to save tokens
    const caseSummaries = cases.map(c => ({
@@ -147,7 +144,7 @@ export const analyzeOperationalRisk = async (cases: Case[]): Promise<RiskAnalysi
 
    try {
       const response = await ai.models.generateContent({
-         model: 'gemini-2.5-flash',
+         model: 'gemini-3-pro-preview',
          contents: prompt,
          config: {
             responseMimeType: 'application/json',
@@ -173,6 +170,7 @@ export const analyzeOperationalRisk = async (cases: Case[]): Promise<RiskAnalysi
       });
 
       if (response.text) {
+         // Use response.text property directly as per guidelines
          return JSON.parse(response.text) as RiskAnalysis;
       }
       return null;
@@ -190,7 +188,8 @@ export interface ProposalContent {
 }
 
 export const generateProposalContent = async (serviceName: string, clientName: string, customScope: string): Promise<ProposalContent | null> => {
-  if (!apiKey) return null;
+  // Create a new GoogleGenAI instance right before making an API call to ensure it always uses the most up-to-date API key.
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 
   const prompt = `
     Actúa como un Socio Director Senior de "Lagom Legal", una firma de élite ("Quiet Luxury").
@@ -236,7 +235,7 @@ export const generateProposalContent = async (serviceName: string, clientName: s
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3-pro-preview',
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -253,6 +252,7 @@ export const generateProposalContent = async (serviceName: string, clientName: s
     });
 
     if (response.text) {
+      // Use response.text property directly as per guidelines
       return JSON.parse(response.text) as ProposalContent;
     }
     return null;
