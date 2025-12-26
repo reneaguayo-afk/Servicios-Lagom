@@ -62,7 +62,7 @@
         background: #d4d4d4;
       }
     </style>
-    <!-- Import Map: Consolidado y sincronizado con las dependencias del proyecto -->
+    <!-- Import Map: Consolidado para evitar conflictos de hooks -->
     <script type="importmap">
 {
   "imports": {
@@ -70,7 +70,7 @@
     "react-dom": "https://esm.sh/react-dom@19.2.3",
     "react-dom/client": "https://esm.sh/react-dom@19.2.3/client",
     "react/jsx-runtime": "https://esm.sh/react@19.2.3/jsx-runtime",
-    "react-router-dom": "https://esm.sh/react-router-dom@7.1.5?external=react,react-dom",
+    "react-router-dom": "https://esm.sh/react-router-dom@7.10.1?external=react,react-dom",
     "lucide-react": "https://esm.sh/lucide-react@0.460.0?external=react",
     "@google/genai": "https://esm.sh/@google/genai@1.33.0",
     "jspdf": "https://esm.sh/jspdf@3.0.4",
@@ -85,7 +85,6 @@
   </head>
   <body>
     <div id="root"></div>
-    <!-- Punto de entrada principal -->
     <script type="module" src="/index.tsx"></script>
   </body>
 </html>
