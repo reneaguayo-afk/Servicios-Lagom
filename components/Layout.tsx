@@ -1,7 +1,9 @@
+
 import React, { useState } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { LayoutDashboard, FolderKanban, Users, DollarSign, LogOut, Briefcase, FileText, Bell, Calendar, ShieldAlert, Settings, BookOpen } from 'lucide-react';
 import { NotificationsPanel } from './NotificationsPanel';
+import { StorageService } from '../services/storage';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -57,16 +59,22 @@ const NavItem = ({ to, icon, label }: { to: string, icon: React.ReactNode, label
   </NavLink>
 );
 
-export const Layout: React.FC<LayoutProps> = ({ children, role }) => {
+// Fix: Standard function component approach is more reliable in React 18 than React.FC for children
+export const Layout = ({ children, role }: LayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
   const handleLogout = () => {
+    if (role === 'admin') {
+      StorageService.logoutAdmin();
+    } else {
+      localStorage.removeItem('lagom_current_client');
+    }
     navigate('/');
   };
 
-  // CLIENT LAYOUT: Full width, no sidebar (Navigation is handled inside ClientDashboard)
+  // CLIENT LAYOUT: Full width, no sidebar
   if (role === 'client') {
     return (
       <div className="min-h-screen bg-[#F9F9F9]">
@@ -77,7 +85,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, role }) => {
     );
   }
 
-  // ADMIN LAYOUT: Includes Sidebar and Top Bar for Mobile
+  // ADMIN LAYOUT: Includes Sidebar and Top Bar
   return (
     <div className="flex min-h-screen bg-[#F9F9F9]">
       {/* Sidebar */}
@@ -94,18 +102,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, role }) => {
         </div>
       </aside>
 
-      {/* Mobile Header (Admin Only) */}
-      <div className="md:hidden fixed top-0 w-full h-16 bg-white z-40 flex items-center justify-between px-6 shadow-sm">
-        <span className="font-serif text-lg font-bold text-gold">Lagom Admin</span>
-        <div className="flex items-center gap-4">
-           <button onClick={() => setIsNotificationsOpen(true)} className="relative">
-              <Bell size={20} />
-              <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-           </button>
-           <button onClick={handleLogout}><LogOut size={20} /></button>
-        </div>
-      </div>
-
       {/* Main Content */}
       <main className="flex-1 md:ml-64 p-6 md:p-10 pt-20 md:pt-10 overflow-y-auto">
         <div className="max-w-7xl mx-auto animate-fadeIn">
@@ -113,7 +109,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, role }) => {
         </div>
       </main>
 
-      {/* Notification Panel */}
       <NotificationsPanel isOpen={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} />
     </div>
   );
